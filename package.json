@@ -1,0 +1,34 @@
+{
+  "name": "stage_1",
+  "version": "1.0.0",
+  "description": "Classification API for names in age, gender, and nationality",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "dev": "tsx watch --watch src src/index.ts",
+    "start": "node dist/index.js",
+    "format": "prettier --write ."
+  },
+  "keywords": [],
+  "author": "Wilfrid Okorie",
+  "license": "ISC",
+  "packageManager": "pnpm@10.24.0",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "@types/pg": "^8.20.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "pg": "^8.20.0",
+    "prettier": "^3.8.3",
+    "uuid": "^13.0.0"
+  }
+}
