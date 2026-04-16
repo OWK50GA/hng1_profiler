@@ -79,6 +79,8 @@ router.post("/", async (req: Request, res: Response) => {
             })
         }
 
+        const topCountry = country.sort((a, b) => b.probability - a.probability)[0];
+
         const record = {
             id: uuid.v7(),
             name,
@@ -87,8 +89,8 @@ router.post("/", async (req: Request, res: Response) => {
             sample_size,
             age,
             age_group,
-            country_id: country[0].country_id,
-            country_probability: country[0].probability,
+            country_id: topCountry.country_id,
+            country_probability: topCountry.probability,
         }
         
         const { classification, duplicate } = await dbClient.insertRecord(record);
@@ -211,7 +213,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
          if ((err as Error).message.includes('not found')) {
             res.status(404).json({ status: "error", message: (err as Error).message });
         } else {
-            res.status(500).json({ status: "error", error: 'Internal server error' });
+            res.status(500).json({ status: "error", message: 'Internal server error' });
         }
     }
 })
