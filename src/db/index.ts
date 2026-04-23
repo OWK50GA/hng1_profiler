@@ -154,8 +154,8 @@ export class DatabaseClient {
     const values: any[] = [];
     let paramIndex = 1;
 
-    const sortBy = options.sort_by ?? "created_at";
-    const sortOrder = (options.sort_order ?? "desc").toUpperCase();
+    const sortBy = options.sort_by ? options.sort_by : undefined;
+    const sortOrder = options.sort_order ? options.sort_order.toUpperCase() : undefined;
 
     const limit = options.limit && options.limit <= 50 ? options.limit : 10;
     const page = options.page ?? 1;
@@ -208,11 +208,15 @@ export class DatabaseClient {
       whereClause = " WHERE " + conditions.join(" AND ");
     }
 
+    // Have to make this into sortClause, because it is possible to be undefined
+    // unlike pagination and limit which have defaults
+    const sortClause = (sortBy && sortOrder) ? ` ORDER BY ${sortBy} ${sortOrder} `: ``;
+
     const query = `
       SELECT id, name, gender, gender_probability, age, age_group, country_id, country_name, country_probability, created_at
       FROM classifications
       ${whereClause}
-      ORDER BY ${sortBy} ${sortOrder}
+      ${sortClause}
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 
