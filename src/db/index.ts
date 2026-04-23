@@ -1,6 +1,11 @@
 import { Pool, QueryResult, Result } from "pg";
 import { config } from "dotenv";
-import { AgeGroup, AllProfileQueryOptions, Classification, Gender } from "../types";
+import {
+  AgeGroup,
+  AllProfileQueryOptions,
+  Classification,
+  Gender,
+} from "../types";
 
 config();
 
@@ -19,37 +24,41 @@ export class DatabaseClient {
 
     this.pool = new Pool({
       connectionString: dbUrl,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+      ssl:
+        process.env.NODE_ENV === "production"
+          ? { rejectUnauthorized: false }
+          : false,
     });
   }
 
   /**
-   * 
+   *
    * @param record - record to add to classifications
    * @returns Promise<Classification> - Creared classifications entry
    * @throws Error if name already exists or database operation fails
    */
   async insertRecord(record: {
-    id: string,
+    id: string;
     name: string;
     gender: "male" | "female";
     gender_probability: number;
-    sample_size: number;
+    // sample_size: number;
     age: number;
     age_group: "adult" | "child" | "teenager" | "senior";
     country_id: string;
+    country_name: string;
     country_probability: number;
   }): Promise<{
-    classification: Classification,
-    duplicate: boolean
+    classification: Classification;
+    duplicate: boolean;
   }> {
     const query = `
         INSERT INTO classifications (
-            id, name, gender, gender_probability, sample_size, age, age_group, country_id, country_probability
+            id, name, gender, gender_probability, age, age_group, country_id, country_name, country_probability
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9
-        ) ON CONFLICT (LOWER(name)) DO NOTHING
-        RETURNING id, name, gender, gender_probability, sample_size, age, age_group, country_id, country_probability, created_at
+        ) ON CONFLICT (name) DO NOTHING
+        RETURNING id, name, gender, gender_probability, age, age_group, country_id, country_name, country_probability, created_at
     `;
 
     try {
@@ -58,33 +67,34 @@ export class DatabaseClient {
         record.name,
         record.gender,
         record.gender_probability,
-        record.sample_size,
+        // record.sample_size,
         record.age,
         record.age_group,
         record.country_id,
+        record.country_name,
         record.country_probability,
       ]);
 
       if (result.rowCount && result.rowCount > 0) {
         return {
           classification: result.rows[0],
-          duplicate: false
+          duplicate: false,
         };
       }
 
       const existing = await this.getRecordByName(record.name);
       if (!existing) {
-        throw new Error("Unexpected state: name conflict but record not found")
+        throw new Error("Unexpected state: name conflict but record not found");
       }
       return {
         classification: existing,
-        duplicate: true
+        duplicate: true,
       };
     } catch (error: any) {
       if (error.code === "23505") {
         throw new Error("Name already exists");
       }
-      throw error
+      throw error;
     }
   }
 
@@ -92,17 +102,17 @@ export class DatabaseClient {
     // const normalizedName = name.toLowerCase().trim();
 
     const query = `
-        SELECT id, name, gender, gender_probability, sample_size, age, age_group, country_id, country_probability, created_at
+        SELECT id, name, gender, gender_probability, age, age_group, country_id, country_name, country_probability, created_at
         FROM classifications
         WHERE LOWER(name) = $1
     `;
 
     const result = await this.pool.query(query, [name.trim().toLowerCase()]);
-    
+
     if (result.rowCount && result.rowCount > 0) {
       return result.rows[0];
     } else {
-      return null
+      return null;
     }
   }
 
@@ -115,17 +125,17 @@ export class DatabaseClient {
     // const normalizedName = name.toLowerCase().trim();
 
     const query = `
-        SELECT id, name, gender, gender_probability, sample_size, age, age_group, country_id, country_probability, created_at
+        SELECT id, name, gender, gender_probability, age, age_group, country_id, country_name, country_probability, created_at
         FROM classifications
         WHERE id = $1
     `;
 
     const result = await this.pool.query(query, [id]);
-    
+
     if (result.rowCount && result.rowCount > 0) {
       return result.rows[0];
     } else {
-      return null
+      return null;
     }
   }
 
@@ -134,12 +144,22 @@ export class DatabaseClient {
   }
 
   async getAllRecords(options: AllProfileQueryOptions): Promise<{
-    records: Classification[],
-    count: number
+    records: Classification[];
+    // count: number;
+    page: number;
+    limit: number,
+    total: number;
   }> {
     const conditions: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
+
+    const sortBy = options.sort_by ?? "created_at";
+    const sortOrder = (options.sort_order ?? "desc").toUpperCase();
+
+    const limit = options.limit && options.limit <= 50 ? options.limit : 10;
+    const page = options.page ?? 1;
+    const offset = (page - 1) * limit;
 
     if (options.gender) {
       conditions.push(`gender = $${paramIndex}`);
@@ -159,23 +179,60 @@ export class DatabaseClient {
       paramIndex++;
     }
 
-    let whereClause = '';
+    if (options.min_age) {
+      conditions.push(`age >= $${paramIndex}`);
+      values.push(options.min_age);
+      paramIndex++;
+    }
+
+    if (options.max_age) {
+      conditions.push(`age <= $${paramIndex}`);
+      values.push(options.max_age);
+      paramIndex++;
+    }
+
+    if (options.min_gender_probability) {
+      conditions.push(`gender_probability >= $${paramIndex}`);
+      values.push(options.min_gender_probability);
+      paramIndex++;
+    }
+
+    if (options.min_country_probability) {
+      conditions.push(`country_probability >= $${paramIndex}`);
+      values.push(options.min_country_probability);
+      paramIndex++;
+    }
+
+    let whereClause = "";
     if (conditions.length > 0) {
-      whereClause = ' WHERE ' + conditions.join(' AND ');
+      whereClause = " WHERE " + conditions.join(" AND ");
     }
 
     const query = `
-      SELECT id, name, gender, age, age_group, country_id
+      SELECT id, name, gender, gender_probability, age, age_group, country_id, country_name, country_probability, created_at
       FROM classifications
       ${whereClause}
-      ORDER BY name ASC
+      ORDER BY ${sortBy} ${sortOrder}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 
+    const totalResult = await this.pool.query(
+      `SELECT COUNT(*) FROM classifications`
+    );
+    const total = parseInt(totalResult.rows[0].count);
+
+
+    values.push(limit, offset);
+
     const result = await this.pool.query(query, values);
+    // const total = result.rows.length > 0 ? parseInt(result.rows[0].total_count) : 0;
 
     return {
       records: result.rows,
-      count: result.rowCount ?? 0
+      // count: result.rowCount ?? 0,
+      page,
+      limit,
+      total
     };
   }
 
@@ -193,7 +250,7 @@ export class DatabaseClient {
       }
       return (result.rowCount ?? 0) > 0;
     } catch (err) {
-      throw err
+      throw err;
     }
   }
 }

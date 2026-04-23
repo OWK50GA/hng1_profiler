@@ -7,7 +7,7 @@ export type NationalizeAPIResponse = {
   }[];
 };
 
-export type Gender = "male" | "female"
+export type Gender = "male" | "female";
 
 export type GenderizeAPIResponse = {
   count: number;
@@ -22,23 +22,38 @@ export type AgifyAPIResponse = {
   age: number | null;
 };
 
-export type AgeGroup = "adult" | "child" | "teenager" | "senior"
+export type AgeGroup = "adult" | "child" | "teenager" | "senior";
 
 export type Classification = {
   id: string;
   name: string;
   gender: "male" | "female";
   gender_probability: number;
-  sample_size: number;
+  // sample_size: number;
   age: number;
   age_group: AgeGroup;
   country_id: string;
+  country_name: string;
   country_probability: number;
   created_at: Date;
 };
 
+export type SortField = "age" | "created_at" | "gender_probability"
+export type SortOrder = "asc" | "desc";
+
 export type AllProfileQueryOptions = {
-    gender?: Gender, 
-    age_group?: AgeGroup, 
-    country_id?: string
-  }
+  // Filter
+  gender?: Gender;
+  age_group?: AgeGroup;
+  country_id?: string;
+  min_age?: number;
+  max_age?: number;
+  min_gender_probability?: number;
+  min_country_probability?: number;
+  // Sort
+  sort_by?: SortField;
+  sort_order?: SortOrder;
+  // Pagination and Limit
+  page?: number;
+  limit?: number;
+};
