@@ -57,11 +57,13 @@ pnpm dev
 Creates a new profile by classifying a name using three external APIs. If the name already exists (case-sensitive), returns the existing record.
 
 **Request body:**
+
 ```json
 { "name": "ella" }
 ```
 
 **Response 201 — created:**
+
 ```json
 {
   "status": "success",
@@ -81,6 +83,7 @@ Creates a new profile by classifying a name using three external APIs. If the na
 ```
 
 **Response 200 — already exists:**
+
 ```json
 {
   "status": "success",
@@ -112,11 +115,13 @@ Returns profiles with optional filtering, sorting, and pagination.
 | `limit` | number | Results per page (default: 10, max: 50) |
 
 **Example:**
+
 ```
 GET /api/profiles?gender=male&country_id=NG&sort_by=age&sort_order=asc&page=1&limit=20
 ```
 
 **Response 200:**
+
 ```json
 {
   "status": "success",
@@ -142,11 +147,13 @@ Natural language query endpoint. Parses a plain English query string and convert
 | `limit` | Can also be embedded in `q` as `show 20` or `take 20` |
 
 **Example:**
+
 ```
 GET /api/profiles/search?q=young males from nigeria page 2
 ```
 
 **Response 200:**
+
 ```json
 {
   "status": "success",
@@ -172,6 +179,7 @@ GET /api/profiles/search?q=young males from nigeria page 2
 Returns a single profile by UUID.
 
 **Response 200:**
+
 ```json
 {
   "status": "success",
