@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import profileRoutes from "./routes/profiles";
+import profileRoutes from "./routes/profiles.route";
 import { buildCountryMap, countryMap } from "./utils"
 
 const app = express();
