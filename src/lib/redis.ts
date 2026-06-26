@@ -10,7 +10,5 @@ if (!redisUrl) {
 }
 
 export const redis = new Redis(redisUrl, {
-  tls: {
-    rejectUnauthorized: false
-  }
+  tls: redisUrl.startsWith("rediss://") ? { rejectUnauthorized: false } : undefined,
 });
