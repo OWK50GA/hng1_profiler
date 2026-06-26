@@ -14,6 +14,8 @@ import { requestLogger } from "./middleware/logger";
 
 config();
 
+const PORT = process.env.PORT ?? 3002;
+
 const app = express();
 
 buildCountryMap(countryMap);
@@ -57,6 +59,6 @@ app.use(
   v1ProfileRoutes,
 );
 
-app.listen(3001, () => {
-  console.log("server is running on port 3001");
+app.listen(PORT, () => {
+  console.log(`server is running on port ${PORT}`);
 });
